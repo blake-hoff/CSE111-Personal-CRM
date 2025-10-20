@@ -10,6 +10,6 @@ Tri Dang, Brian Tsan
 
 
 ## Team Members
-Jason Chen
-Blake Hoff
+Jason Chen,
+Blake Hoff,
 Michael Wang
