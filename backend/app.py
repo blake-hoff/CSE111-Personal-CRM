@@ -25,7 +25,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor.close()
 
 def create_database():
-    path = os.path.join(os.path.dirname(__file__), "..", "Project 2 - schema", "create_schema.sql")
+    path = os.path.join(os.path.dirname(__file__), "..", "Phase 2 - schema + queries", "create_schema.sql")
     
     with open(path, "r", encoding="utf-8") as f:
         schema_sql = f.read()
