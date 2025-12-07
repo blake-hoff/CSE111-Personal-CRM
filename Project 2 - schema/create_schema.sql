@@ -20,8 +20,7 @@ DROP TABLE IF EXISTS Photo;
 
 CREATE TABLE Photo (
   photokey   INTEGER PRIMARY KEY,
-  filePath   TEXT NOT NULL,
-  caption    TEXT
+  imagedata   TEXT NOT NULL
 );
 
 CREATE TABLE Notes (

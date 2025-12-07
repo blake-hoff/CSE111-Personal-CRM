@@ -40,7 +40,7 @@ def create_database():
 # create views from flask-admin
 class PhotoView(ModelView):
     column_hide_backrefs = False
-    column_list = ["photokey", "filePath", "caption"]
+    column_list = ["photokey", "filePath"]
 class NotesView(ModelView):
     column_hide_backrefs = False
     column_list = ["notekey", "title", "content", "dateCreated", "lastModified"]
@@ -57,7 +57,6 @@ class PersonView(ModelView):
     column_hide_backrefs = False
     column_list = [
         "perkey",
-        "photokey",
         "firstName",
         "lastName",
         "birthday",

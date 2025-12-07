@@ -8,10 +8,8 @@ class Photo(db.Model):
     __tablename__ = "Photo"
 
     photokey = db.Column(db.Integer, primary_key=True)
-    filePath = db.Column(db.String, nullable=False)
-    caption = db.Column(db.String, nullable=True)
+    imagedata = db.Column(db.Text, nullable=False)
 
-    # optional backref targets
     people = db.relationship("Person", back_populates="photo", passive_deletes=True)
     note_photos = db.relationship("NotePhoto", back_populates="photo", passive_deletes=True)
 
@@ -25,7 +23,7 @@ class Notes(db.Model):
     notekey = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
     content = db.Column(db.String, nullable=True)
-    # TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    
     dateCreated = db.Column(
         db.String,
         nullable=False,
@@ -95,7 +93,7 @@ class Person(db.Model):
     )
     firstName = db.Column(db.String, nullable=False)
     lastName = db.Column(db.String, nullable=False)
-    birthday = db.Column(db.String, nullable=True)  # TEXT in schema
+    birthday = db.Column(db.String, nullable=True)
     location = db.Column(db.String, nullable=True)
 
     photo = db.relationship("Photo", back_populates="people")
