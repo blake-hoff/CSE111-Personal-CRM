@@ -1,6 +1,7 @@
-PRAGMA foreign_keys = ON;
-BEGIN TRANSACTION;
-/*don't forget to 'COMMIT;' afterwards if there are no errors*/
+-- Not necessary for final project
+-- PRAGMA foreign_keys = ON;
+-- BEGIN TRANSACTION;
+-- /*don't forget to 'COMMIT;' afterwards if there are no errors*/
 
 DROP TABLE IF EXISTS remCat;
 DROP TABLE IF EXISTS remPer;
