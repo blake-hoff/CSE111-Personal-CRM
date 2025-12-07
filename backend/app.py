@@ -1,18 +1,18 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_admin import Admin
-from flask_admin.contrib.sqla import ModelView
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 import sqlite3
 import os
 
 app = Flask(__name__)
+app.secret_key = "secret"
 CORS(app)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.sqlite"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# import ORM models from models.py
+# import ORM models from ORM_models.py
 from ORM_models import db, Photo, Notes, SocialType, RelationshipType, Category, Person, SocialLinks, NotePhoto, NotedPerson, Relationships, Reminders, PerCat, RemPer, RemCat
 db.init_app(app)
 
@@ -37,79 +37,8 @@ def create_database():
     finally:
         conn.close()
 
-# create views from flask-admin
-class PhotoView(ModelView):
-    column_hide_backrefs = False
-    column_list = ["photokey", "filePath"]
-class NotesView(ModelView):
-    column_hide_backrefs = False
-    column_list = ["notekey", "title", "content", "dateCreated", "lastModified"]
-class SocialTypeView(ModelView):
-    column_hide_backrefs = False
-    column_list = ["socialkey", "platformName", "platformURL"]
-class RelationshipTypeView(ModelView):
-    column_hide_backrefs = False
-    column_list = ["relTypeKey", "name", "description"]
-class CategoryView(ModelView):
-    column_hide_backrefs = False
-    column_list = ["catkey", "name", "description"]
-class PersonView(ModelView):
-    column_hide_backrefs = False
-    column_list = [
-        "perkey",
-        "firstName",
-        "lastName",
-        "birthday",
-        "location",
-    ]
-class SocialLinksView(ModelView):
-    column_hide_backrefs = False
-    column_list = [
-        "socialkey",
-        "perkey",
-        "handle",
-        "profileURL",
-    ]
-class NotePhotoView(ModelView):
-    column_hide_backrefs = False
-    column_list = [
-        "notekey",
-        "photokey",
-    ]
-class NotedPersonView(ModelView):
-    column_hide_backrefs = False
-    column_list = [
-        "perkey",
-        "notekey",
-    ]
-class RelationshipsView(ModelView):
-    column_hide_backrefs = False
-    column_list = [
-        "relTypeKey",
-        "perkey1",
-        "perkey2",
-    ]
-class RemindersView(ModelView):
-    column_hide_backrefs = False
-    column_list = [
-        "remkey",
-        "title",
-        "description",
-        "dueDate",
-        "completed",
-    ]
-class PerCatView(ModelView):
-    column_hide_backrefs = False
-    column_list = [
-        "perkey",
-        "catkey",
-    ]
-class RemPerView(ModelView):
-    column_hide_backrefs = False
-    column_list = ["remkey", "perkey",]
-class RemCatView(ModelView):
-    column_hide_backrefs = False
-    column_list = ["remkey", "catkey",]
+# import views from views.py
+from views import PhotoView, NotesView, SocialTypeView, RelationshipTypeView, RelationshipTypeView, CategoryView, PersonView, SocialLinksView, NotePhotoView, NotedPersonView, RelationshipsView, RemindersView, PerCatView, RemPerView, RemCatView
 
 admin = Admin(app)
 admin.add_view(PhotoView(Photo, db.session))
