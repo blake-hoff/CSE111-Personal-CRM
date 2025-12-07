@@ -88,7 +88,6 @@ class RelationshipsView(ModelView):
         "relTypeKey",
         "perkey1",
         "perkey2",
-        "startDate",
     ]
 class RemindersView(ModelView):
     column_hide_backrefs = False
@@ -98,7 +97,6 @@ class RemindersView(ModelView):
         "description",
         "dueDate",
         "completed",
-        "lastContactDate",
     ]
 class PerCatView(ModelView):
     column_hide_backrefs = False

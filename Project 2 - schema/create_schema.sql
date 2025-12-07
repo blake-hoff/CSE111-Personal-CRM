@@ -96,7 +96,6 @@ CREATE TABLE Relationships (
   relTypeKey INTEGER NOT NULL,
   perkey1    INTEGER NOT NULL,
   perkey2    INTEGER NOT NULL,
-  startDate  TEXT,
   PRIMARY KEY (perkey1, perkey2),
   CHECK (perkey1 < perkey2),
   FOREIGN KEY (relTypeKey) REFERENCES RelationshipType(relTypeKey)
@@ -112,8 +111,7 @@ CREATE TABLE Reminders (
   title           TEXT NOT NULL,
   description     TEXT,
   dueDate         TEXT,
-  completed       INTEGER NOT NULL DEFAULT 0,
-  lastContactDate TEXT
+  completed       INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE perCat (

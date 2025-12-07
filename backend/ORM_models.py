@@ -203,7 +203,6 @@ class Relationships(db.Model):
         db.ForeignKey("Person.perkey", onupdate="CASCADE", ondelete="CASCADE"),
         primary_key=True,
     )
-    startDate = db.Column(db.String, nullable=True)
 
     __table_args__ = (
         CheckConstraint("perkey1 < perkey2", name="ck_relationships_perkey_order"),
@@ -224,13 +223,11 @@ class Reminders(db.Model):
     title = db.Column(db.String, nullable=False)
     description = db.Column(db.String, nullable=True)
     dueDate = db.Column(db.String, nullable=True)
-    # INTEGER NOT NULL DEFAULT 0
     completed = db.Column(
         db.Boolean,
         nullable=False,
         server_default=text("0"),
     )
-    lastContactDate = db.Column(db.String, nullable=True)
 
     rem_pers = db.relationship("RemPer", back_populates="reminder", passive_deletes=True)
     rem_cats = db.relationship("RemCat", back_populates="reminder", passive_deletes=True)
