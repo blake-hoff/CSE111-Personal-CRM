@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from ORM_models import db, Person, Notes, Reminders, Relationships, NotedPerson, RemPer
+from ORM_models import db, Person, Notes, Reminders, Relationships, NotedPerson, RemPer, RelationshipType
 from sqlalchemy import func
 
 bp = Blueprint('api', __name__, url_prefix='/api')
@@ -207,11 +207,11 @@ def list_person_reminders(perkey):
 
 
 # Add a reminder to a person
+
 @bp.route('/persons/<int:perkey>/reminders', methods=['POST'])
 def add_person_reminder(perkey):
-    p = Person.query.get_or_404(perkey)
+    Person.query.get_or_404(perkey)  # ensure person exists
     data = request.json or {}
-
     rem = Reminders(
         title=data.get("label", ""),
         description=data.get("description"),
@@ -221,12 +221,19 @@ def add_person_reminder(perkey):
     db.session.add(rem)
     db.session.flush()  # assign rem.remkey
 
-    # Junction table
-    rp = RemPer(remkey=rem.remkey, perkey=p.perkey)
-    db.session.add(rp)
-    db.session.commit()
+    # Accept array of person keys; default to [perkey]
+    person_keys = data.get("personKeys")
+    if not person_keys:
+        person_keys = [perkey]
 
+    # Create RemPer junction for each unique person
+    for pk in set(int(k) for k in person_keys):
+        Person.query.get_or_404(pk)
+        db.session.add(RemPer(remkey=rem.remkey, perkey=pk))
+
+    db.session.commit()
     return jsonify({"id": rem.remkey}), 201
+
 
 # Update a reminder for a person
 @bp.route('/persons/<int:perkey>/reminders/<int:remkey>', methods=['PUT'])
@@ -276,20 +283,28 @@ def list_person_notes(perkey):
 
 # Add a note to a person
 @bp.route('/persons/<int:perkey>/notes', methods=['POST'])
-def add_person_note(perkey):
-    p = Person.query.get_or_404(perkey)
-    data = request.json or {}
 
+@bp.route('/persons/<int:perkey>/notes', methods=['POST'])
+def add_person_note(perkey):
+    Person.query.get_or_404(perkey)  # ensure person exists
+    data = request.json or {}
     note = Notes(title=data.get("title", ""), content=data.get("content", ""))
     db.session.add(note)
     db.session.flush()  # assign note.notekey
 
-    # Junction table
-    np = NotedPerson(perkey=p.perkey, notekey=note.notekey)
-    db.session.add(np)
-    db.session.commit()
+    # Accept an array of person keys; default to [perkey]
+    person_keys = data.get("personKeys")
+    if not person_keys:
+        person_keys = [perkey]
 
+    # Create NotedPerson junction for each unique person
+    for pk in set(int(k) for k in person_keys):
+        Person.query.get_or_404(pk)  # validate person exists
+        db.session.add(NotedPerson(perkey=pk, notekey=note.notekey))
+
+    db.session.commit()
     return jsonify({"id": note.notekey}), 201
+
 
 # Update a note for a person
 @bp.route('/persons/<int:perkey>/notes/<int:notekey>', methods=['PUT'])
@@ -337,6 +352,19 @@ def list_person_relationships(perkey):
         })
 
     return jsonify(relationships)
+
+
+# List relationship types (for dropdown)
+@bp.route('/relationship_types', methods=['GET'])
+def list_relationship_types():
+    types = RelationshipType.query.all()
+    return jsonify([
+        {
+            "relTypeKey": t.relTypeKey,
+            "name": t.name,
+            "description": t.description
+        } for t in types
+    ])
 
 
 # Add a relationship

@@ -93,14 +93,6 @@ function Sidebar() {
         </li>
         <li>
           <NavLink
-            to="/notes"
-            style={({ isActive }) => ({ ...linkBase, ...(isActive ? activeStyles : {}) })}
-          >
-            Notes
-          </NavLink>
-        </li>
-        <li>
-          <NavLink
             to="/reminders"
             style={({ isActive }) => ({ ...linkBase, ...(isActive ? activeStyles : {}) })}
           >
@@ -118,7 +110,7 @@ function Sidebar() {
           color: "#94A3B8",
         }}
       >
-        © {new Date().getFullYear()} People &amp; Notes
+        © {new Date().getFullYear()} Jason Chen, Blake Hoff, &amp; Michael Wang (CSE111)
       </div>
     </aside>
   );
@@ -149,11 +141,6 @@ export default function App() {
             <Route path="/persons/new" element={<PersonForm />} />
             <Route path="/persons/:id" element={<PersonForm />} />
             <Route path="/persons/:perkey/view" element={<PersonDetail />} />
-
-            {/* Notes */}
-            <Route path="/notes" element={<NotesList />} />
-            <Route path="/notes/new" element={<NoteForm />} />
-            <Route path="/notes/:id" element={<NoteForm />} />
 
             {/* Reminders */}
             <Route path="/reminders" element={<RemindersList />} />
