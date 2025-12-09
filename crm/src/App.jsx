@@ -58,8 +58,7 @@ function Sidebar() {
           color: "#E5E7EB",
         }}
       >
-        <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>People &amp; Notes</h1>
-        <div style={{ fontSize: 12, color: "#94A3B8" }}>Navigation</div>
+        <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Personal CRM</h1>
       </div>
 
       {/* Links centered vertically */}
