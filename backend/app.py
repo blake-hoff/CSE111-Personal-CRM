@@ -1,3 +1,6 @@
+# The code snippet is importing necessary modules and packages for setting up a Flask web application
+# with CORS (Cross-Origin Resource Sharing) support, an admin interface, and database management using
+# SQLAlchemy with SQLite. Here is a breakdown of each import statement:
 from flask import Flask
 from flask_cors import CORS
 from flask_admin import Admin
@@ -9,12 +12,18 @@ import os
 app = Flask(__name__)
 app.secret_key = "secret"
 CORS(app)
+
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.sqlite"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # import ORM models from ORM_models.py
 from ORM_models import db, Photo, Notes, SocialType, RelationshipType, Category, Person, SocialLinks, NotePhoto, NotedPerson, Relationships, Reminders, PerCat, RemPer, RemCat
 db.init_app(app)
+from api import bp as api_bp
+
+
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+app.register_blueprint(api_bp)
 
 # ensures foreign keys are enforced for ALL database connections
 @event.listens_for(Engine, "connect")
