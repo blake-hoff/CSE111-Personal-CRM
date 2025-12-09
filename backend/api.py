@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
-from ORM_models import db, Person, Notes, Reminders
+from ORM_models import db, Person, Notes, Reminders, Relationships, NotedPerson, RemPer
+from sqlalchemy import func
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -182,3 +183,228 @@ def delete_reminder(id):
     db.session.delete(r)
     db.session.commit()
     return '', 204
+
+
+
+
+
+
+# List reminders for a specific person
+@bp.route('/persons/<int:perkey>/reminders', methods=['GET'])
+def list_person_reminders(perkey):
+    p = Person.query.get_or_404(perkey)
+    reminders = [
+        {
+            "id": rp.remkey,
+            "label": rp.reminder.title,
+            "description": rp.reminder.description,
+            "due_date": rp.reminder.dueDate,
+            "completed": rp.reminder.completed
+        }
+        for rp in p.rem_pers
+    ]
+    return jsonify(reminders)
+
+
+# Add a reminder to a person
+@bp.route('/persons/<int:perkey>/reminders', methods=['POST'])
+def add_person_reminder(perkey):
+    p = Person.query.get_or_404(perkey)
+    data = request.json or {}
+
+    rem = Reminders(
+        title=data.get("label", ""),
+        description=data.get("description"),
+        dueDate=data.get("due_date"),
+        completed=data.get("completed", False)
+    )
+    db.session.add(rem)
+    db.session.flush()  # assign rem.remkey
+
+    # Junction table
+    rp = RemPer(remkey=rem.remkey, perkey=p.perkey)
+    db.session.add(rp)
+    db.session.commit()
+
+    return jsonify({"id": rem.remkey}), 201
+
+# Update a reminder for a person
+@bp.route('/persons/<int:perkey>/reminders/<int:remkey>', methods=['PUT'])
+def update_person_reminder(perkey, remkey):
+    rp = RemPer.query.filter_by(perkey=perkey, remkey=remkey).first_or_404()
+    rem = rp.reminder
+
+    data = request.json or {}
+    rem.title = data.get("label", rem.title)
+    rem.description = data.get("description", rem.description)
+    rem.dueDate = data.get("due_date", rem.dueDate)
+    rem.completed = data.get("completed", rem.completed)
+
+    db.session.commit()
+    return jsonify({"message": "reminder updated"})
+
+
+# Delete a reminder for a person
+@bp.route('/persons/<int:perkey>/reminders/<int:remkey>', methods=['DELETE'])
+def delete_person_reminder(perkey, remkey):
+    rp = RemPer.query.filter_by(perkey=perkey, remkey=remkey).first_or_404()
+    rem = rp.reminder
+
+    # remove junction first
+    db.session.delete(rp)
+    db.session.delete(rem)
+    db.session.commit()
+    return jsonify({"message": "reminder deleted"})
+
+
+
+
+# List notes for a specific person
+@bp.route('/persons/<int:perkey>/notes', methods=['GET'])
+def list_person_notes(perkey):
+    p = Person.query.get_or_404(perkey)
+    notes = [
+        {
+            "id": np.notekey,
+            "title": np.note.title,
+            "content": np.note.content
+        }
+        for np in p.noted_person_entries
+    ]
+    return jsonify(notes)
+
+
+# Add a note to a person
+@bp.route('/persons/<int:perkey>/notes', methods=['POST'])
+def add_person_note(perkey):
+    p = Person.query.get_or_404(perkey)
+    data = request.json or {}
+
+    note = Notes(title=data.get("title", ""), content=data.get("content", ""))
+    db.session.add(note)
+    db.session.flush()  # assign note.notekey
+
+    # Junction table
+    np = NotedPerson(perkey=p.perkey, notekey=note.notekey)
+    db.session.add(np)
+    db.session.commit()
+
+    return jsonify({"id": note.notekey}), 201
+
+# Update a note for a person
+@bp.route('/persons/<int:perkey>/notes/<int:notekey>', methods=['PUT'])
+def update_person_note(perkey, notekey):
+    # ensure the note belongs to this person
+    np = NotedPerson.query.filter_by(perkey=perkey, notekey=notekey).first_or_404()
+    note = np.note
+
+    data = request.json or {}
+    note.title = data.get("title", note.title)
+    note.content = data.get("content", note.content)
+
+    db.session.commit()
+    return jsonify({"message": "note updated"})
+
+
+# Delete a note for a person
+@bp.route('/persons/<int:perkey>/notes/<int:notekey>', methods=['DELETE'])
+def delete_person_note(perkey, notekey):
+    np = NotedPerson.query.filter_by(perkey=perkey, notekey=notekey).first_or_404()
+    note = np.note
+
+    # remove junction first
+    db.session.delete(np)
+    db.session.delete(note)
+    db.session.commit()
+    return jsonify({"message": "note deleted"})
+
+# List relationships for a person
+@bp.route('/persons/<int:perkey>/relationships', methods=['GET'])
+def list_person_relationships(perkey):
+    p = Person.query.get_or_404(perkey)
+    relationships = []
+
+    for rel in p.rels_as_first + p.rels_as_second:
+        other = rel.person2 if rel.person1.perkey == p.perkey else rel.person1
+        relationships.append({
+            "relTypeKey": rel.relTypeKey,
+            "type": rel.rel_type.name,
+            "withPerson": {
+                "perkey": other.perkey,
+                "firstName": other.firstName,
+                "lastName": other.lastName
+            }
+        })
+
+    return jsonify(relationships)
+
+
+# Add a relationship
+@bp.route('/persons/<int:perkey>/relationships', methods=['POST'])
+def add_relationship(perkey):
+    p1 = Person.query.get_or_404(perkey)
+    data = request.json or {}
+
+    p2key = data.get("perkey2")
+    relTypeKey = data.get("relTypeKey")
+    if not p2key or not relTypeKey:
+        return jsonify({"error": "perkey2 and relTypeKey required"}), 400
+
+    p2 = Person.query.get_or_404(p2key)
+
+    # Ensure perkey1 < perkey2 for CheckConstraint
+    perkey1, perkey2 = sorted([p1.perkey, p2.perkey])
+
+    rel = Relationships(perkey1=perkey1, perkey2=perkey2, relTypeKey=relTypeKey)
+    db.session.add(rel)
+    db.session.commit()
+    return jsonify({"message": "relationship added"}), 201
+# Update relationship type
+@bp.route('/persons/<int:perkey>/relationships/<int:other_perkey>', methods=['PUT'])
+def update_relationship(perkey, other_perkey):
+    # order keys to satisfy CheckConstraint
+    perkey1, perkey2 = sorted([perkey, other_perkey])
+    rel = Relationships.query.filter_by(perkey1=perkey1, perkey2=perkey2).first_or_404()
+
+    data = request.json or {}
+    if "relTypeKey" in data:
+        rel.relTypeKey = data["relTypeKey"]
+
+    db.session.commit()
+    return jsonify({"message": "relationship updated"})
+
+
+# Delete a relationship
+@bp.route('/persons/<int:perkey>/relationships/<int:other_perkey>', methods=['DELETE'])
+def delete_relationship(perkey, other_perkey):
+    perkey1, perkey2 = sorted([perkey, other_perkey])
+    rel = Relationships.query.filter_by(perkey1=perkey1, perkey2=perkey2).first_or_404()
+
+    db.session.delete(rel)
+    db.session.commit()
+    return jsonify({"message": "relationship deleted"})
+
+
+# Get one person-specific note
+@bp.route('/persons/<int:perkey>/notes/<int:notekey>', methods=['GET'])
+def get_person_note(perkey, notekey):
+    np = NotedPerson.query.filter_by(perkey=perkey, notekey=notekey).first_or_404()
+    note = np.note
+    return jsonify({
+        "id": note.notekey,
+        "title": note.title,
+        "content": note.content
+    })
+
+# Get one person-specific reminder
+@bp.route('/persons/<int:perkey>/reminders/<int:remkey>', methods=['GET'])
+def get_person_reminder(perkey, remkey):
+    rp = RemPer.query.filter_by(perkey=perkey, remkey=remkey).first_or_404()
+    r = rp.reminder
+    return jsonify({
+        "id": r.remkey,
+        "label": r.title,
+        "description": r.description,
+        "due_date": r.dueDate,
+        "completed": r.completed
+    })

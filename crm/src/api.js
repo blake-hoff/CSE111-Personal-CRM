@@ -15,8 +15,25 @@ export const Persons = {
     get: (id) => apiFetch(`/persons/${id}`),
     create: (data) => apiFetch('/persons', { method: 'POST', body: JSON.stringify(data) }),
     update: (id, data) => apiFetch(`/persons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    del: (id) => apiFetch(`/persons/${id}`, { method: 'DELETE' })
+    del: (id) => apiFetch(`/persons/${id}`, { method: 'DELETE' }),
+
+    // ✅ Person-specific notes, reminders, relationships
+    listNotes: (perkey) => apiFetch(`/persons/${perkey}/notes`),
+    createNote: (perkey, data) => apiFetch(`/persons/${perkey}/notes`, { method: 'POST', body: JSON.stringify(data) }),
+    updateNote: (perkey, notekey, data) => apiFetch(`/persons/${perkey}/notes/${notekey}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteNote: (perkey, notekey) => apiFetch(`/persons/${perkey}/notes/${notekey}`, { method: 'DELETE' }),
+
+    listReminders: (perkey) => apiFetch(`/persons/${perkey}/reminders`),
+    createReminder: (perkey, data) => apiFetch(`/persons/${perkey}/reminders`, { method: 'POST', body: JSON.stringify(data) }),
+    updateReminder: (perkey, remkey, data) => apiFetch(`/persons/${perkey}/reminders/${remkey}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteReminder: (perkey, remkey) => apiFetch(`/persons/${perkey}/reminders/${remkey}`, { method: 'DELETE' }),
+
+    listRelationships: (perkey) => apiFetch(`/persons/${perkey}/relationships`),
+    createRelationship: (perkey, otherPerkey, data) => apiFetch(`/persons/${perkey}/relationships`, { method: 'POST', body: JSON.stringify({ perkey2: otherPerkey, ...data }) }),
+    updateRelationship: (perkey, otherPerkey, data) => apiFetch(`/persons/${perkey}/relationships/${otherPerkey}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteRelationship: (perkey, otherPerkey) => apiFetch(`/persons/${perkey}/relationships/${otherPerkey}`, { method: 'DELETE' }),
 };
+
 
 export const NotesAPI = {
     list: () => apiFetch('/notes'),

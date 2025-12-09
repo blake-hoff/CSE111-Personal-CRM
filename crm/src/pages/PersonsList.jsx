@@ -39,12 +39,10 @@ export default function PersonsList() {
                         key={p.perkey}
                         className="border p-3 rounded shadow relative hover:shadow-md transition-shadow"
                     >
-                        <Link
-                            to={`/persons/${p.perkey}`}
-                            className="text-blue-600 font-semibold hover:underline"
-                        >
+                        <Link to={`/persons/${p.perkey}/view`}>
                             {p.firstName} {p.lastName}
                         </Link>
+
 
                         <button
                             onClick={() => deletePerson(p.perkey)}
