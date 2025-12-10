@@ -1,0 +1,314 @@
+// React frontend entrypoint (single-file React component)
+// This file contains the full UI with contacts, notes, reminders, relationships,
+// social links, categories, and CRUD operations.
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+
+export default function CRMApp() {
+  const [contacts, setContacts] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", category: "" });
+
+  const [notes, setNotes] = useState([]);
+  const [noteText, setNoteText] = useState("");
+
+  const [reminders, setReminders] = useState([]);
+  const [reminderText, setReminderText] = useState("");
+  const [reminderDate, setReminderDate] = useState("");
+
+  const [socialLinks, setSocialLinks] = useState([]);
+  const [linkPlatform, setLinkPlatform] = useState("");
+  const [linkURL, setLinkURL] = useState("");
+
+  const [relationships, setRelationships] = useState([]);
+  const [relationText, setRelationText] = useState("");
+
+  const loadContacts = async () => {
+    const r = await fetch("/contacts");
+    setContacts(await r.json());
+  };
+
+  const loadContactExtras = async (id) => {
+    const n = await fetch(`/notes/${id}`);
+    setNotes(await n.json());
+
+    const rem = await fetch(`/reminders/${id}`);
+    setReminders(await rem.json());
+
+    const so = await fetch(`/social/${id}`);
+    setSocialLinks(await so.json());
+
+    const rel = await fetch(`/relationships/${id}`);
+    setRelationships(await rel.json());
+  };
+
+  useEffect(() => { loadContacts(); }, []);
+
+  const createContact = async () => {
+    await fetch("/contacts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    setForm({ name: "", email: "", phone: "", category: "" });
+    await loadContacts();
+  };
+
+  const selectContact = (c) => {
+    setSelected(c);
+    setForm({ ...c });
+    loadContactExtras(c.id);
+  };
+
+  const updateContact = async () => {
+    await fetch(`/contacts/${selected.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    loadContacts();
+  };
+
+  const deleteContact = async () => {
+    await fetch(`/contacts/${selected.id}`, { method: "DELETE" });
+    setSelected(null);
+    loadContacts();
+  };
+
+  const addNote = async () => {
+    await fetch(`/notes/${selected.id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: noteText }),
+    });
+    setNoteText("");
+    loadContactExtras(selected.id);
+  };
+
+  const addReminder = async () => {
+    await fetch(`/reminders/${selected.id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: reminderText, date: reminderDate }),
+    });
+    setReminderText("");
+    setReminderDate("");
+    loadContactExtras(selected.id);
+  };
+
+  const addSocial = async () => {
+    await fetch(`/social/${selected.id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ platform: linkPlatform, url: linkURL }),
+    });
+    setLinkPlatform("");
+    setLinkURL("");
+    loadContactExtras(selected.id);
+  };
+
+  const addRelationship = async () => {
+    await fetch(`/relationships/${selected.id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: relationText }),
+    });
+    setRelationText("");
+    loadContactExtras(selected.id);
+  };
+
+  return (
+    <div className="p-6 grid grid-cols-3 gap-4">
+      <Card className="p-4 col-span-1">
+        <h2 className="text-xl font-bold mb-2">Contacts</h2>
+        {contacts.map((c) => (
+          <div key={c.id} className="p-2 border rounded cursor-pointer hover:bg-gray-100" onClick={() => selectContact(c)}>
+            {c.name}
+          </div>
+        ))}
+
+        <h3 className="font-semibold mt-4">New Contact</h3>
+        <Input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        <Input className="mt-2" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+        <Input className="mt-2" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+        <Input className="mt-2" placeholder="Category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+        <Button className="mt-2" onClick={createContact}>Add Contact</Button>
+      </Card>
+
+      <Card className="p-4 col-span-2">
+        {!selected ? <div>Select a contact</div> : (
+          <>
+            <h2 className="text-2xl font-bold mb-2">{selected.name}</h2>
+
+            <h3 className="font-semibold mt-4">Edit Contact</h3>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Input className="mt-2" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <Input className="mt-2" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <Input className="mt-2" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+            <Button className="mt-2" onClick={updateContact}>Save</Button>
+            <Button className="mt-2 ml-2" variant="destructive" onClick={deleteContact}>Delete</Button>
+
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <Card className="p-3">
+                <h3 className="font-semibold">Notes</h3>
+                {notes.map((n) => <div key={n.id} className="border p-2 mt-2 rounded">{n.text}</div>)}
+                <Textarea className="mt-2" value={noteText} onChange={(e) => setNoteText(e.target.value)} />
+                <Button className="mt-2" onClick={addNote}>Add Note</Button>
+              </Card>
+
+              <Card className="p-3">
+                <h3 className="font-semibold">Reminders</h3>
+                {reminders.map((r) => <div key={r.id} className="border p-2 mt-2 rounded">{r.text} — {r.date}</div>)}
+                <Input className="mt-2" placeholder="Reminder" value={reminderText} onChange={(e) => setReminderText(e.target.value)} />
+                <Input className="mt-2" type="date" value={reminderDate} onChange={(e) => setReminderDate(e.target.value)} />
+                <Button className="mt-2" onClick={addReminder}>Add Reminder</Button>
+              </Card>
+
+              <Card className="p-3">
+                <h3 className="font-semibold">Social Links</h3>
+                {socialLinks.map((s) => <div key={s.id} className="border p-2 mt-2 rounded">{s.platform}: {s.url}</div>)}
+                <Input className="mt-2" placeholder="Platform" value={linkPlatform} onChange={(e) => setLinkPlatform(e.target.value)} />
+                <Input className="mt-2" placeholder="URL" value={linkURL} onChange={(e) => setLinkURL(e.target.value)} />
+                <Button className="mt-2" onClick={addSocial}>Add Link</Button>
+              </Card>
+
+              <Card className="p-3">
+                <h3 className="font-semibold">Relationships</h3>
+                {relationships.map((rel) => <div key={rel.id} className="border p-2 mt-2 rounded">{rel.text}</div>)}
+                <Input className="mt-2" placeholder="Describe relationship" value={relationText} onChange={(e) => setRelationText(e.target.value)} />
+                <Button className="mt-2" onClick={addRelationship}>Add Relationship</Button>
+              </Card>
+            </div>
+          </>
+        )}
+      </Card>
+    </div>
+  );
+}<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Personal CRM</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 18px; }
+      input, button { margin: 4px; padding: 6px; }
+      table { border-collapse: collapse; margin-top: 12px; }
+      th, td { border: 1px solid #ccc; padding: 6px 8px; }
+      .section { margin-top: 20px; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script>
+      const e = React.createElement;
+
+      function App(){
+        return e('div', null,
+          e('h1', null, 'Personal CRM Dashboard'),
+          e(PeopleSection),
+          e(NotesSection)
+        );
+      }
+
+      /* ------------------ PEOPLE ------------------ */
+      function PeopleSection(){
+        const [people, setPeople] = React.useState([]);
+        const [form, setForm] = React.useState({firstName:'', lastName:'', birthday:'', location:''});
+
+        React.useEffect(()=>{ refresh() }, []);
+
+        async function refresh(){
+          const res = await fetch('/api/people');
+          setPeople(await res.json());
+        }
+
+        async function createPerson(ev){
+          ev.preventDefault();
+          await fetch('/api/person', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(form)
+          });
+          setForm({firstName:'', lastName:'', birthday:'', location:''});
+          refresh();
+        }
+
+        async function deletePerson(perkey){
+          if(!confirm('Delete this person?')) return;
+          await fetch('/api/person/' + perkey, {method:'DELETE'});
+          refresh();
+        }
+
+        return e('div', {className:'section'},
+          e('h2', null, 'People'),
+          e('form', {onSubmit:createPerson},
+            e('input', {placeholder:'First name', required:true, value:form.firstName, onChange: (ev)=>setForm({...form, firstName: ev.target.value})}),
+            e('input', {placeholder:'Last name', required:true, value:form.lastName, onChange: (ev)=>setForm({...form, lastName: ev.target.value})}),
+            e('input', {placeholder:'YYYY-MM-DD (birthday)', value:form.birthday, onChange: (ev)=>setForm({...form, birthday: ev.target.value})}),
+            e('input', {placeholder:'Location', value:form.location, onChange: (ev)=>setForm({...form, location: ev.target.value})}),
+            e('button', {type:'submit'}, 'Create Person')
+          ),
+          e('table', null,
+            e('thead', null, e('tr', null,
+              e('th', null, 'perkey'),
+              e('th', null, 'First'),
+              e('th', null, 'Last'),
+              e('th', null, 'Birthday'),
+              e('th', null, 'Location'),
+              e('th', null, 'Actions')
+            )),
+            e('tbody', null, people.map(p =>
+              e('tr', {key:p.perkey},
+                e('td', null, p.perkey),
+                e('td', null, p.firstName),
+                e('td', null, p.lastName),
+                e('td', null, p.birthday || ''),
+                e('td', null, p.location || ''),
+                e('td', null,
+                  e('button', {onClick: ()=>deletePerson(p.perkey)}, 'Delete')
+                )
+              )
+            ))
+          )
+        );
+      }
+
+      /* ------------------ NOTES ------------------ */
+      function NotesSection(){
+        const [notes, setNotes] = React.useState([]);
+        const [form, setForm] = React.useState({title:'', content:''});
+
+        async function createNote(ev){
+          ev.preventDefault();
+          const res = await fetch('/api/notes', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(form)
+          });
+          const out = await res.json();
+          alert('Note created with notekey: ' + out.notekey);
+          setForm({title:'', content:''});
+        }
+
+        return e('div', {className:'section'},
+          e('h2', null, 'Create Note'),
+          e('form', {onSubmit:createNote},
+            e('input', {placeholder:'Title', required:true, value:form.title, onChange:(ev)=>setForm({...form, title:ev.target.value})}),
+            e('input', {placeholder:'Content', value:form.content, onChange:(ev)=>setForm({...form, content:ev.target.value})}),
+            e('button', {type:'submit'}, 'Create Note')
+          )
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+    </script>
+  </body>
+</html>
